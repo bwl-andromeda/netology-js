@@ -1,90 +1,113 @@
-import Character, { Bowerman, Swordsman, Magician, Daemon, Undead, Zombie } from '../character.js';
+import Character from "../Character";
 
-describe('Character Class', () => {
-  test('should create a character with valid name and type', () => {
-    const character = new Character('Alice', 'Bowman');
-    expect(character.name).toBe('Alice');
-    expect(character.type).toBe('Bowman');
+describe("Класс - 'Character'", () => {
+  test("Создание персонажа с допустимым именем и типом", () => {
+    const character = new Character("Alice", "Bowman");
+    expect(character.name).toBe("Alice");
+    expect(character.type).toBe("Bowman");
+    expect(character.health).toBe(character.maxHealth);
+    expect(character.level).toBe(1);
   });
 
-  test('should throw an error for invalid name length', () => {
+  test("Ошибка при создании персонажа с недопустимой длиной имени", () => {
     expect(() => {
-      new Character('A', 'Bowman');
-    }).toThrow('error: 2 < name.length < 10 characters');
+      new Character("A", "Bowman");
+    }).toThrow("error: 2 < name.length < 10 characters");
   });
 
-  test('should throw an error for invalid character type', () => {
+  test("Ошибка при создании персонажа с недопустимым типом", () => {
     expect(() => {
-      new Character('Alice', 'Archer');
-    }).toThrow('error: invalid character type');
+      new Character("Alice", "Archer");
+    }).toThrow("error: invalid character type");
   });
 
-  test('should level up the character', () => {
-    const character = new Character('Alice', 'Bowman');
+  test("Повышение уровня персонажа", () => {
+    const character = new Character("Alice", "Bowman");
+    character.attack = 25;
+    character.defense = 25;
     character.levelUp();
     expect(character.level).toBe(2);
-    expect(character.attack).toBe(30);
-    expect(character.defence).toBe(30);
-    expect(character.health).toBe(100);
+    expect(character.attack).toBe(30); // 25 * 1.2
+    expect(character.defense).toBe(30); // 25 * 1.2
+    expect(character.health).toBe(character.maxHealth);
   });
 
-  test('should damage the character', () => {
-    const character = new Character('Alice', 'Bowman');
+  test("Нанесение урона персонажу", () => {
+    const character = new Character("Alice", "Bowman");
+    character.defense = 25; // Устанавливаем уровень защиты
     character.damage(20);
-    expect(character.health).toBe(85);
+    const expectedHealth = 100 - 20 * (1 - 25 / 100);
+    expect(character.health).toBeCloseTo(expectedHealth);
   });
 
-  test('should create a Bowerman character', () => {
-    const bowerman = new Bowerman('Bob');
-    expect(bowerman.name).toBe('Bob');
-    expect(bowerman.type).toBe('Bowman');
-  });
-  test('should create a Swordsman character', () => {
-    const swordsman = new Swordsman('Sam');
-    expect(swordsman.name).toBe('Sam');
-    expect(swordsman.type).toBe('Swordsman');
-  });
-  
-  test('should create a Magician character', () => {
-    const magician = new Magician('Merlin');
-    expect(magician.name).toBe('Merlin');
-    expect(magician.type).toBe('Magician');
-  });
-  
-  test('should create a Daemon character', () => {
-    const daemon = new Daemon('Dave');
-    expect(daemon.name).toBe('Dave');
-    expect(daemon.type).toBe('Daemon');
-  });
-  
-  test('should create an Undead character', () => {
-    const undead = new Undead('Ursula');
-    expect(undead.name).toBe('Ursula');
-    expect(undead.type).toBe('Undead');
-  });
-  
-  test('should create a Zombie character', () => {
-    const zombie = new Zombie('Zack');
-    expect(zombie.name).toBe('Zack');
-    expect(zombie.type).toBe('Zombie');
-  });
-  test('should throw an error when trying to level up a dead character', () => {
-    const character = new Character('Alice', 'Bowman');
+  test("Ошибка при попытке повысить уровень мёртвого персонажа", () => {
+    const character = new Character("Alice", "Bowman");
     character.health = 0;
     expect(() => {
       character.levelUp();
-    }).toThrow('dead');
+    }).toThrow("dead");
   });
-  
-  test('should set health to 0 when taking fatal damage', () => {
-    const character = new Character('Alice', 'Bowman');
-    character.damage(200); // Assuming fatal damage
-    expect(character.health).toBe(0);
+
+  test("Урон устанавливает здоровье на 0 при летальном исходе", () => {
+    const character = new Character("Alice", "Bowman");
+    character.defense = 25; // Устанавливаем уровень защиты
+    character.damage(200); // Наносим урон 200
+    console.log("after damage: health =", character.health);
+    expect(character.health).toBe(0); // Здоровье должно быть 0
   });
-  
-  test('should not set health to negative value when taking damage', () => {
-    const character = new Character('Alice', 'Bowman');
-    character.damage(200); // Assuming fatal damage
-    expect(character.health).toBe(0);
+
+  test("Урон не уменьшает здоровье ниже 0", () => {
+    const character = new Character("Alice", "Bowman");
+    character.defense = 25; // Устанавливаем уровень защиты
+    character.damage(200); // Наносим урон 200
+    console.log("after damage: health =", character.health);
+
+    expect(character.health).toBe(0); // Здоровье должно быть 0
+  });
+  test("Ошибка при передаче некорректных значений points в damage", () => {
+    const character = new Character("Alice", "Bowman");
+
+    // Проверяем, что передача строки в points вызывает исключение
+    expect(() => {
+      character.damage("invalid");
+    }).toThrow("Invalid points: must be a non-negative number");
+
+    // Проверяем, что передача отрицательного числа в points вызывает исключение
+    expect(() => {
+      character.damage(-10);
+    }).toThrow("Invalid points: must be a non-negative number");
+  });
+  test("Ошибка при передаче некорректных значений defense", () => {
+    const character = new Character("Alice", "Bowman");
+
+    // Установим некорректное значение defense и проверим, что возникает исключение
+    expect(() => {
+      character.defense = "invalid";
+      character.damage(10);
+    }).toThrow("Invalid defense: must be a number between 0 and 100");
+
+    expect(() => {
+      character.defense = -5;
+      character.damage(10);
+    }).toThrow("Invalid defense: must be a number between 0 and 100");
+
+    expect(() => {
+      character.defense = 150;
+      character.damage(10);
+    }).toThrow("Invalid defense: must be a number between 0 and 100");
+  });
+  test("Ошибка при неправильном расчете damageTaken (NaN)", () => {
+    const character = new Character("Alice", "Bowman");
+
+    // Устанавливаем defense в корректное значение
+    character.defense = 25;
+
+    // Передаем NaN в points, чтобы вызвать исключение
+    const points = NaN;
+
+    // Проверяем, что вызывается исключение с сообщением "Calculation error: damageTaken is NaN"
+    expect(() => {
+      character.damage(points);
+    }).toThrow("Calculation error: damageTaken is NaN");
   });
 });
